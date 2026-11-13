@@ -119,6 +119,7 @@
     <button data-tab="risk">위험·지연<span class="n" id="riskN"></span></button>
     <button data-tab="all">전체 스타일</button>
     <button data-tab="month">월별 물량</button>
+    <button data-tab="price">가격</button>
   </nav>
 </header>
 <main id="main"></main>
@@ -190,6 +191,7 @@ async function load() {
     DATA = { ...o, rows: prepare(o.rows) };
     LS.set('ob.cache', JSON.stringify(o));
     render();
+    if (typeof loadStyleIndex === 'function') loadStyleIndex().then(() => { if (tab === 'price') render(); });
   } catch (e) {
     const c = LS.get('ob.cache');
     if (c) { DATA = { ...JSON.parse(c), rows: prepare(JSON.parse(c).rows) }; render(); $('src').innerHTML = `<span style="color:var(--bad)">${esc(e.message)}</span> · 저장된 마지막 데이터 표시 중`; }
@@ -315,7 +317,7 @@ function render() {
   const k = riskLists();
   $('riskN').textContent = (k.late.length + k.soonShip.length) || '';
   document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
-  $('main').innerHTML = tab === 'ship' ? viewShip() : tab === 'risk' ? viewRisk() : tab === 'all' ? viewAll() : tab === 'month' ? viewMonth() : viewBoard();
+  $('main').innerHTML = tab === 'ship' ? viewShip() : tab === 'risk' ? viewRisk() : tab === 'all' ? viewAll() : tab === 'month' ? viewMonth() : tab === 'price' && typeof viewPrice === 'function' ? viewPrice() : viewBoard();
   if (tab === 'all') bindFilters();
 }
 function bindFilters() {
@@ -333,6 +335,7 @@ function openDetail(id) {
   $('sheetBox').innerHTML = `<h2>${esc(r.style)}</h2>
     <div class="sub">${esc(r.name)} · <span class="pill ${esc(r.st)}">${ST[r.st] || esc(r.st)}</span> ${esc(r.vendor)} ${esc(r.season)} · ${esc(r.factory)}</div>
     <dl class="kv">${kv.map(([k, v]) => `<dt>${k}</dt><dd>${esc(v)}</dd>`).join('')}</dl>
+    <div class="actions" style="justify-content:flex-start;margin:10px 0 0"><button class="btn" data-style="${esc(typeof keyOf === 'function' ? keyOf(r.style) : r.style)}">💲 가격 · 코스팅 · T/P 보기</button></div>
     <div class="notes"><div class="checks">
       ${[['done', '완료'], ['docs', '서류'], ['qc', 'QC'], ['booked', '선적 부킹']].map(([k, l]) => `<label><input type="checkbox" data-k="${k}" ${n[k] ? 'checked' : ''}>${l}</label>`).join('')}
     </div><textarea id="memo" placeholder="메모 (예: 11/15 Julie 회신 대기)">${esc(n.memo || '')}</textarea></div>
@@ -401,5 +404,6 @@ load();
 setInterval(() => { if (!$('sheet').classList.contains('on') && document.visibilityState === 'visible') load(); }, 5 * 60000);
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') render(); });
 </script>
+<script src="board-style.js"></script>
 </body>
 </html>
