@@ -7,6 +7,9 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="robots" content="noindex, nofollow">
 <title>Order Board</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="board-assets/icon-192.png">
+<link rel="apple-touch-icon" href="board-assets/icon-192.png">
 <style>
   :root { --bg: #0a0d13; --panel: #131822; --panel2: #1a2130; --line: #232c3d; --text: #e9edf4; --muted: #8b95a8; --dim: #5b6578;
     --accent: #5aa9ff; --fab: #3ecf8e; --ship: #ff9b6a; --warn: #f5b942; --bad: #ff5c5c; --violet: #c8a2ff; }
@@ -392,6 +395,8 @@ document.addEventListener('click', e => {
 $('sheet').addEventListener('click', e => { if (e.target.id === 'sheet') $('sheet').classList.remove('on'); });
 $('reload').onclick = load;
 $('gear').onclick = () => showSetup();
+// installable app (service worker only works on the GitHub site, https)
+if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
 load();
 setInterval(() => { if (!$('sheet').classList.contains('on') && document.visibilityState === 'visible') load(); }, 5 * 60000);
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') render(); });

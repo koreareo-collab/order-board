@@ -1,0 +1,17 @@
+{
+  "name": "오더 보드",
+  "short_name": "오더 보드",
+  "description": "원단 자카르타 도착 · 출고 EX-FACTORY · 위험·지연 · 월별 물량",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0a0d13",
+  "theme_color": "#0a0d13",
+  "lang": "ko",
+  "icons": [
+    { "src": "board-assets/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "board-assets/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "board-assets/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
