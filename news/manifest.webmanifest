@@ -1,0 +1,17 @@
+{
+  "name": "영어·인니어 뉴스",
+  "short_name": "A→가 뉴스",
+  "description": "BBC 영어 · ANTARA 인도네시아어 헤드라인에 한국어 단어 뜻과 문장 번역",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0a0d13",
+  "theme_color": "#0a0d13",
+  "lang": "ko",
+  "icons": [
+    { "src": "news-assets/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "news-assets/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "news-assets/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

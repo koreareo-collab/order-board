@@ -1,0 +1,50 @@
+# Rebuilds the tablet news data (news/news.json) so the news app stays current while the office PC is off.
+# Public repository, so these runs are free. The job only reads public news feeds and the word dictionary
+# in .github/news; nothing private is involved.
+name: News data
+
+on:
+  schedule:
+    - cron: '7 * * * *'      # every hour (GitHub may run it a little late)
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/news/**'
+      - '.github/workflows/news.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: news-data
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v5
+
+      - name: "Node"
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'      # node:sqlite is built in from Node 24
+
+      - name: "Build news.json (headlines + Korean word notes)"
+        run: |
+          cd .github/news
+          mkdir -p data
+          cp dict.db data/dict.db          # gloss.js reads data/dict.db next to itself
+          node build-news-data.js "$GITHUB_WORKSPACE/news/news.json"
+
+      - name: "Commit when the news changed"
+        run: |
+          git config user.name "news-bot"
+          git config user.email "news-bot@users.noreply.github.com"
+          git add news/news.json
+          if git diff --cached --quiet; then echo "No change"; exit 0; fi
+          git commit -q -m "news data: $(date -u '+%Y-%m-%d %H:%M') UTC [actions]"
+          git push -q
+          echo "Uploaded."
