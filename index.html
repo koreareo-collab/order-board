@@ -58,6 +58,10 @@
   .pill.ok { color: var(--fab); } .pill.run { color: var(--accent); } .pill.watch, .pill.issue { color: var(--bad); background: rgba(255,92,92,.14); }
   .pill.new { color: var(--warn); } .pill.fc { color: var(--violet); }
   .empty { padding: 16px 14px; color: var(--muted); border-top: 1px solid var(--line); }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; }
+  @media (max-width: 900px) { .two { grid-template-columns: 1fr; } }
+  .dayh { display: flex; justify-content: space-between; padding: 6px 14px; font-size: 13px; font-weight: 700; color: var(--muted); background: var(--panel2); border-top: 1px solid var(--line); }
+  .dayh.late { color: var(--bad); }
 
   /* search + filters */
   .tools { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
@@ -107,6 +111,7 @@
     <button class="icon" id="gear" title="설정">⚙</button>
   </div>
   <nav id="tabs">
+    <button data-tab="ship">원단·출고</button>
     <button data-tab="board">2주 보드</button>
     <button data-tab="risk">위험·지연<span class="n" id="riskN"></span></button>
     <button data-tab="all">전체 스타일</button>
@@ -130,7 +135,7 @@ const WD = ['일', '월', '화', '수', '목', '금', '토'];
 const ST = { ok: '입고완료', run: '정상진행', watch: '주의·지연', issue: '이슈', new: '신규접수', fc: 'Forecast' };
 const FAC_COLOR = { GAYA: '#5aa9ff', YBA: '#3ecf8e', WBG: '#c8a2ff', '미정': '#5b6578' };
 
-let DATA = null, NOTES = {}, notesSha = null, tab = LS.get('ob.tab') || 'board';
+let DATA = null, NOTES = {}, notesSha = null, tab = LS.get('ob.tab') || 'ship', SHIP_DAYS = +(LS.get('ob.shipDays') || 10);
 
 // ---------- dates ----------
 const today0 = () => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; };
@@ -249,6 +254,35 @@ function viewAll() {
     ${opts('fac', uniq(r => r.facs))}${opts('vendor', uniq(r => [r.vendor]))}${opts('season', uniq(r => [r.season]))}${opts('st', uniq(r => [r.st]))}</div>
     <div id="allList">${listCard('스타일 (EX-FACTORY 순)', rows, r => `Buy ${esc(r.buy)} · ${exfText(r)} · 원단 ${esc(r.fab || '-')}`)}</div>`;
 }
+// fabric arrival / ex-factory within N days, grouped by date (same rules as the PC page)
+function viewShip() {
+  const fab = [], ship = [];
+  for (const r of DATA.rows) {
+    if (r.fabDate) { const d = days(r.fabDate); if (d >= -7 && d <= SHIP_DAYS) fab.push({ r, date: r.fabDate, d }); }
+    for (const x of r.exfs) { const d = days(x); if (d >= 0 && d <= SHIP_DAYS) ship.push({ r, date: x, d }); }
+  }
+  const sort = (a, b) => a.d - b.d || b.r.qty - a.r.qty;
+  fab.sort(sort); ship.sort(sort);
+  const group = (items, kind) => {
+    if (!items.length) return '<div class="empty">' + SHIP_DAYS + '일 안에 ' + (kind === 'fab' ? '도착 예정인 원단' : '출고 예정') + '이 없습니다.</div>';
+    let html = '', last = null;
+    for (const it of items) {
+      if (it.d !== last) {
+        const same = items.filter(x => x.d === it.d), dt = it.date;
+        const when = it.d < 0 ? (-it.d) + '일 지남' : it.d === 0 ? '오늘' : it.d === 1 ? '내일' : 'D-' + it.d;
+        html += '<div class="dayh' + (it.d < 0 ? ' late' : '') + '"><span>' + md(dt) + ' (' + WD[dt.getDay()] + ') · ' + when + '</span><span>' + same.length + '건 · ' + num(same.reduce((s, x) => s + x.r.qty, 0)) + ' pcs</span></div>';
+        last = it.d;
+      }
+      html += row(it.r, r => kind === 'fab' ? '원단 ' + esc(r.fab) + ' · ' + exfText(r) : exfText(r) + ' · 원단 ' + esc(r.fab || '-'));
+    }
+    return html;
+  };
+  const sum = a => a.length + '건 · ' + num(a.reduce((s, x) => s + x.r.qty, 0)) + ' pcs';
+  return '<div class="tools">' + [10, 20, 30].map(n => '<button class="btn' + (n === SHIP_DAYS ? ' primary' : '') + '" data-days="' + n + '">' + n + '일</button>').join('') + '</div>'
+    + '<div class="two"><div class="card"><h2 style="color:var(--fab)">원단 자카르타 도착<small>' + sum(fab) + '</small></h2>' + group(fab, 'fab') + '</div>'
+    + '<div class="card"><h2 style="color:var(--ship)">출고 EX-FACTORY<small>' + sum(ship) + '</small></h2>' + group(ship, 'ship') + '</div></div>';
+}
+
 function viewMonth() {
   const map = new Map();
   for (const r of DATA.rows) {
@@ -278,7 +312,7 @@ function render() {
   const k = riskLists();
   $('riskN').textContent = (k.late.length + k.soonShip.length) || '';
   document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
-  $('main').innerHTML = tab === 'risk' ? viewRisk() : tab === 'all' ? viewAll() : tab === 'month' ? viewMonth() : viewBoard();
+  $('main').innerHTML = tab === 'ship' ? viewShip() : tab === 'risk' ? viewRisk() : tab === 'all' ? viewAll() : tab === 'month' ? viewMonth() : viewBoard();
   if (tab === 'all') bindFilters();
 }
 function bindFilters() {
@@ -348,6 +382,8 @@ function showSetup(err) {
 
 // ---------- events ----------
 document.addEventListener('click', e => {
+  const dd = e.target.closest('[data-days]');
+  if (dd) { SHIP_DAYS = +dd.dataset.days; LS.set('ob.shipDays', SHIP_DAYS); render(); return; }
   const t = e.target.closest('[data-tab]');
   if (t) { tab = t.dataset.tab; LS.set('ob.tab', tab); render(); window.scrollTo(0, 0); return; }
   const c = e.target.closest('[data-id]');
