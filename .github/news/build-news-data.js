@@ -34,7 +34,24 @@ function seedFrom(file) {
   ];
   const out = { builtAt: new Date().toISOString(), by: process.env.GITHUB_ACTIONS ? 'actions' : 'pc', feeds: [], words: {}, sent: {} };
 
+  // Indonesian tab: practical conversation sentences instead of ANTARA news (indo-phrases.json "mode")
+  const ph = require('./indo-phrases').load();
+  const usePhrases = ph && Array.isArray(ph.phrases) && ph.phrases.length && ph.mode !== 'news';
   for (const f of feeds) {
+    if (f.key === 'indonesia' && usePhrases) {
+      const list = ph.phrases.filter(p => p && p.id).map(p => {
+        const parts = require('./indo-phrases').parts(p.id, p.w);
+        for (const x of parts) {
+          if (!x.ko) continue;
+          const key = 'id|' + (x.base || x.w).toLowerCase();
+          if (!out.words[key]) out.words[key] = { ko: x.ko, pos: '', en: '', full: '', src: 'phrase', dict: [], idn: [] };
+        }
+        return { t: p.id, d: p.s || '', s: p.s || '', link: '', time: null, parts, ko: p.ko || '' };
+      });
+      out.feeds.push({ key: 'indonesia', name: '실전 회화', kind: 'phrase', lang: 'id', site: '', items: list });
+      log(`실전 회화: ${list.length}문장`);
+      continue;
+    }
     await f.feed.refresh();
     const items = f.feed.headlines().slice(0, PER_FEED);
     const names = gloss.namesFrom(items.map(x => x.title));
