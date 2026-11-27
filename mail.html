@@ -43,7 +43,7 @@
 <main>
   <header>
     <h1>폴더별 메일 요약</h1>
-    <div><a class="lnk" href="./">오더보드</a> <a class="lnk" href="orders.html">원단·출고 일정</a></div>
+    <div><span id="tabLinks"><a class="lnk" href="./">오더보드</a> <a class="lnk" href="orders.html">원단·출고 일정</a></span></div>
   </header>
   <div class="src" id="src">불러오는 중…</div>
   <div id="note"></div>
@@ -62,6 +62,12 @@ const WD = ['일', '월', '화', '수', '목', '금', '토'];
 let DATA = null, cur = LS.get('ml.folder') || '', onlyUnread = LS.get('ml.unread') === '1';
 
 async function fetchData() {
+  // on the laptop itself: read the local copy (no access key needed)
+  if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) {
+    const r = await fetch('/mail-data.json', { cache: 'no-store' });
+    if (!r.ok) throw new Error('노트북 메일 요약 자료가 아직 없습니다');
+    return r.json();
+  }
   if (REPO && TOKEN) {
     const r = await fetch(`https://api.github.com/repos/${REPO}/contents/mail.json`, {
       headers: { Authorization: `Bearer ${TOKEN}`, Accept: 'application/vnd.github.raw+json' }, cache: 'no-store' });
@@ -110,6 +116,7 @@ async function load() {
   render();
 }
 $('onlyUnread').onchange = e => { onlyUnread = e.target.checked; LS.set('ml.unread', onlyUnread ? '1' : '0'); render(); };
+if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) $('tabLinks').hidden = true;
 load(); setInterval(load, 60000);
 </script>
 </body>
