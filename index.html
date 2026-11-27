@@ -24,6 +24,7 @@
   nav { display: flex; gap: 6px; padding: 0 16px 10px; overflow-x: auto; }
   nav button { font: inherit; font-size: 15px; font-weight: 700; padding: 9px 16px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); color: var(--muted); white-space: nowrap; cursor: pointer; }
   nav button.on { color: var(--text); border-color: var(--accent); background: rgba(90,169,255,.14); }
+  nav a.navlink { font-size: 15px; font-weight: 700; padding: 9px 16px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); color: var(--accent); white-space: nowrap; text-decoration: none; }
   nav button .n { font-size: 12px; margin-left: 4px; color: var(--bad); }
   main { padding: 14px 16px 40px; }
   .hint { color: var(--muted); font-size: 13px; margin: 0 0 10px; }
@@ -120,6 +121,7 @@
     <button data-tab="all">전체 스타일</button>
     <button data-tab="month">월별 물량</button>
     <button data-tab="price">가격</button>
+    <a class="navlink" href="mail.html">메일 요약</a>
   </nav>
 </header>
 <main id="main"></main>
